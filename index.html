@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hogwarts — Enter the Castle</title>
 
     <!-- Three.js -->
@@ -144,141 +141,57 @@
 
     <!-- Opening screen -->
     <div id="intro">
-
         <div class="intro-content">
-
-            <div class="eyebrow">
-                A Forbidden Entrance
-            </div>
-
+            <div class="eyebrow">A Forbidden Entrance</div>
             <h1>HOGWARTS</h1>
-
-            <div class="subtitle">
-                The castle awaits
-            </div>
-
-            <button id="enterButton">
-                ENTER THE CASTLE
-            </button>
-
+            <div class="subtitle">The castle awaits</div>
+            <button id="enterButton">ENTER THE CASTLE</button>
         </div>
-
-        <div id="loading">
-            Initializing magic
-        </div>
-
+        <div id="loading">Initializing magic</div>
     </div>
 
+    <!-- Direct Online Audio Tracks -->
+    <audio id="ambientSound" src="https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3" loop></audio>
+    <audio id="gateSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
-    <!-- Three.js scene will appear here -->
     <script>
-
-        /*
-         * ============================================
-         * HOGWARTS 3D CINEMATIC ENTRANCE
-         * ============================================
-         */
-
-        let scene;
-        let camera;
-        let renderer;
-
+        let scene, camera, renderer;
+        let leftDoorGroup, rightDoorGroup;
         let started = false;
 
-        // Scene setup
         function init() {
-
             scene = new THREE.Scene();
-
             scene.background = new THREE.Color(0x000403);
+            scene.fog = new THREE.FogExp2(0x000805, 0.018);
 
-            // Atmospheric fog
-            scene.fog = new THREE.FogExp2(
-                0x000805,
-                0.018
-            );
-
-
-            // Camera
             camera = new THREE.PerspectiveCamera(
                 55,
                 window.innerWidth / window.innerHeight,
                 0.1,
                 2000
             );
+            camera.position.set(0, 5, 35);
 
-            camera.position.set(
-                0,
-                5,
-                35
-            );
-
-
-            // Renderer
             renderer = new THREE.WebGLRenderer({
                 antialias: true,
                 powerPreference: "high-performance"
             });
-
-            renderer.setSize(
-                window.innerWidth,
-                window.innerHeight
-            );
-
-            renderer.setPixelRatio(
-                Math.min(window.devicePixelRatio, 1.5)
-            );
-
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
 
-            document.body.appendChild(
-                renderer.domElement
-            );
-
-
-            // Lighting
-
-            const ambientLight =
-                new THREE.AmbientLight(
-                    0x10251b,
-                    1.5
-                );
-
+            const ambientLight = new THREE.AmbientLight(0x10251b, 1.5);
             scene.add(ambientLight);
 
-
-            const moonLight =
-                new THREE.DirectionalLight(
-                    0x9bb8aa,
-                    1.2
-                );
-
-            moonLight.position.set(
-                -20,
-                40,
-                30
-            );
-
+            const moonLight = new THREE.DirectionalLight(0x9bb8aa, 1.2);
+            moonLight.position.set(-20, 40, 30);
             moonLight.castShadow = true;
-
             scene.add(moonLight);
 
-
-            const emeraldLight =
-                new THREE.PointLight(
-                    0x00ff88,
-                    8,
-                    80
-                );
-
-            emeraldLight.position.set(
-                0,
-                5,
-                10
-            );
-
+            const emeraldLight = new THREE.PointLight(0x00ff88, 8, 80);
+            emeraldLight.position.set(0, 5, 10);
             scene.add(emeraldLight);
-
 
             createGround();
             createGate();
@@ -288,255 +201,118 @@
             animate();
         }
 
-
-        // Ground
         function createGround() {
-
-            const geometry =
-                new THREE.PlaneGeometry(
-                    500,
-                    500
-                );
-
-            const material =
-                new THREE.MeshStandardMaterial({
-                    color: 0x050807,
-                    roughness: 0.95,
-                    metalness: 0.2
-                });
-
-            const ground =
-                new THREE.Mesh(
-                    geometry,
-                    material
-                );
-
-            ground.rotation.x =
-                -Math.PI / 2;
-
-            ground.position.y = 0;
-
+            const geometry = new THREE.PlaneGeometry(500, 500);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x050807,
+                roughness: 0.95,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(geometry, material);
+            ground.rotation.x = -Math.PI / 2;
             ground.receiveShadow = true;
-
             scene.add(ground);
         }
 
-
-        // Main gothic gate
         function createGate() {
+            const gateMaterial = new THREE.MeshStandardMaterial({
+                color: 0x080b09,
+                metalness: 0.9,
+                roughness: 0.3
+            });
 
-            const gateMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0x080b09,
-                    metalness: 0.9,
-                    roughness: 0.3
-                });
+            // Pivot groups for realistic door opening animation
+            leftDoorGroup = new THREE.Group();
+            leftDoorGroup.position.set(-11, 0, 0);
+            scene.add(leftDoorGroup);
 
+            rightDoorGroup = new THREE.Group();
+            rightDoorGroup.position.set(11, 0, 0);
+            scene.add(rightDoorGroup);
 
-            // Left door
-            const leftDoor =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        11,
-                        22,
-                        1.2
-                    ),
-                    gateMaterial
-                );
-
-            leftDoor.position.set(
-                -6,
-                11,
-                0
+            // Left door mesh
+            const leftDoor = new THREE.Mesh(
+                new THREE.BoxGeometry(11, 22, 1.2),
+                gateMaterial
             );
-
+            leftDoor.position.set(5.5, 11, 0);
             leftDoor.castShadow = true;
+            leftDoorGroup.add(leftDoor);
 
-            scene.add(leftDoor);
-
-
-            // Right door
-            const rightDoor =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        11,
-                        22,
-                        1.2
-                    ),
-                    gateMaterial
-                );
-
-            rightDoor.position.set(
-                6,
-                11,
-                0
+            // Right door mesh
+            const rightDoor = new THREE.Mesh(
+                new THREE.BoxGeometry(11, 22, 1.2),
+                gateMaterial
             );
-
+            rightDoor.position.set(-5.5, 11, 0);
             rightDoor.castShadow = true;
-
-            scene.add(rightDoor);
-
+            rightDoorGroup.add(rightDoor);
 
             // Vertical bars
-            for (
-                let x = -10;
-                x <= 10;
-                x += 2
-            ) {
-
-                const bar =
-                    new THREE.Mesh(
-                        new THREE.CylinderGeometry(
-                            0.18,
-                            0.18,
-                            22,
-                            8
-                        ),
-                        gateMaterial
-                    );
-
-                bar.position.set(
-                    x,
-                    11,
-                    -0.8
+            for (let x = -10; x <= 10; x += 2) {
+                const bar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.18, 0.18, 22, 8),
+                    gateMaterial
                 );
-
+                bar.position.set(x, 11, -0.8);
                 scene.add(bar);
             }
 
-
-            // Gothic pillars
             createPillar(-13);
             createPillar(13);
 
-
             // Arch
-            const arch =
-                new THREE.Mesh(
-                    new THREE.TorusGeometry(
-                        11,
-                        0.8,
-                        12,
-                        40,
-                        Math.PI
-                    ),
-                    gateMaterial
-                );
-
-            arch.rotation.z = Math.PI;
-
-            arch.position.set(
-                0,
-                20,
-                0
+            const arch = new THREE.Mesh(
+                new THREE.TorusGeometry(11, 0.8, 12, 40, Math.PI),
+                gateMaterial
             );
-
+            arch.rotation.z = Math.PI;
+            arch.position.set(0, 20, 0);
             scene.add(arch);
 
-
-            // Emerald magical center
-            const magic =
-                new THREE.PointLight(
-                    0x00ff88,
-                    4,
-                    35
-                );
-
-            magic.position.set(
-                0,
-                10,
-                3
-            );
-
+            // Emerald center light
+            const magic = new THREE.PointLight(0x00ff88, 4, 35);
+            magic.position.set(0, 10, 3);
             scene.add(magic);
         }
 
-
         function createPillar(x) {
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x111514,
+                roughness: 0.85,
+                metalness: 0.15
+            });
 
-            const material =
-                new THREE.MeshStandardMaterial({
-                    color: 0x111514,
-                    roughness: 0.85,
-                    metalness: 0.15
-                });
-
-
-            const pillar =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        4,
-                        27,
-                        4
-                    ),
-                    material
-                );
-
-            pillar.position.set(
-                x,
-                13.5,
-                0
+            const pillar = new THREE.Mesh(
+                new THREE.BoxGeometry(4, 27, 4),
+                material
             );
-
+            pillar.position.set(x, 13.5, 0);
             pillar.castShadow = true;
-
             pillar.receiveShadow = true;
-
             scene.add(pillar);
 
-
-            // Pillar cap
-            const cap =
-                new THREE.Mesh(
-                    new THREE.ConeGeometry(
-                        3,
-                        5,
-                        4
-                    ),
-                    material
-                );
-
-            cap.position.set(
-                x,
-                29,
-                0
+            const cap = new THREE.Mesh(
+                new THREE.ConeGeometry(3, 5, 4),
+                material
             );
-
+            cap.position.set(x, 29, 0);
             scene.add(cap);
         }
 
-
-        // Castle silhouette
         function createCastle() {
+            const castleMaterial = new THREE.MeshStandardMaterial({
+                color: 0x080d0b,
+                roughness: 0.9
+            });
 
-            const castleMaterial =
-                new THREE.MeshStandardMaterial({
-                    color: 0x080d0b,
-                    roughness: 0.9
-                });
-
-
-            // Main castle
-            const castle =
-                new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                        55,
-                        35,
-                        25
-                    ),
-                    castleMaterial
-                );
-
-            castle.position.set(
-                0,
-                17,
-                -75
+            const castle = new THREE.Mesh(
+                new THREE.BoxGeometry(55, 35, 25),
+                castleMaterial
             );
-
+            castle.position.set(0, 17, -75);
             scene.add(castle);
 
-
-            // Towers
             const towerPositions = [
                 [-24, -72],
                 [24, -72],
@@ -544,214 +320,97 @@
                 [15, -90]
             ];
 
+            towerPositions.forEach(([x, z]) => {
+                const tower = new THREE.Mesh(
+                    new THREE.CylinderGeometry(5, 6, 45, 10),
+                    castleMaterial
+                );
+                tower.position.set(x, 22, z);
+                scene.add(tower);
 
-            towerPositions.forEach(
-                ([x, z]) => {
-
-                    const tower =
-                        new THREE.Mesh(
-                            new THREE.CylinderGeometry(
-                                5,
-                                6,
-                                45,
-                                10
-                            ),
-                            castleMaterial
-                        );
-
-                    tower.position.set(
-                        x,
-                        22,
-                        z
-                    );
-
-                    scene.add(tower);
-
-
-                    const roof =
-                        new THREE.Mesh(
-                            new THREE.ConeGeometry(
-                                7,
-                                13,
-                                10
-                            ),
-                            castleMaterial
-                        );
-
-                    roof.position.set(
-                        x,
-                        51,
-                        z
-                    );
-
-                    scene.add(roof);
-                }
-            );
+                const roof = new THREE.Mesh(
+                    new THREE.ConeGeometry(7, 13, 10),
+                    castleMaterial
+                );
+                roof.position.set(x, 51, z);
+                scene.add(roof);
+            });
         }
 
-
-        // Magical particles
         function createParticles() {
+            const count = window.innerWidth < 600 ? 400 : 900;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
 
-            const count =
-                window.innerWidth < 600
-                    ? 400
-                    : 900;
-
-            const geometry =
-                new THREE.BufferGeometry();
-
-            const positions =
-                new Float32Array(
-                    count * 3
-                );
-
-
-            for (
-                let i = 0;
-                i < count;
-                i++
-            ) {
-
-                positions[i * 3] =
-                    (Math.random() - 0.5) * 100;
-
-                positions[i * 3 + 1] =
-                    Math.random() * 50;
-
-                positions[i * 3 + 2] =
-                    Math.random() * -120;
+            for (let i = 0; i < count; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 100;
+                positions[i * 3 + 1] = Math.random() * 50;
+                positions[i * 3 + 2] = Math.random() * -120;
             }
-
 
             geometry.setAttribute(
                 "position",
-                new THREE.BufferAttribute(
-                    positions,
-                    3
-                )
+                new THREE.BufferAttribute(positions, 3)
             );
 
+            const material = new THREE.PointsMaterial({
+                color: 0x20d88a,
+                size: 0.12,
+                transparent: true,
+                opacity: 0.65
+            });
 
-            const material =
-                new THREE.PointsMaterial({
-                    color: 0x20d88a,
-                    size: 0.12,
-                    transparent: true,
-                    opacity: 0.65
-                });
-
-
-            const particles =
-                new THREE.Points(
-                    geometry,
-                    material
-                );
-
+            const particles = new THREE.Points(geometry, material);
             scene.add(particles);
         }
 
-
-        // Mouse interaction
         let mouseX = 0;
         let mouseY = 0;
 
-        window.addEventListener(
-            "mousemove",
-            (event) => {
+        window.addEventListener("mousemove", (event) => {
+            mouseX = event.clientX / window.innerWidth - 0.5;
+            mouseY = event.clientY / window.innerHeight - 0.5;
+        });
 
-                mouseX =
-                    (event.clientX /
-                        window.innerWidth -
-                        0.5);
-
-                mouseY =
-                    (event.clientY /
-                        window.innerHeight -
-                        0.5);
-            }
-        );
-
-
-        // Animation loop
         function animate() {
-
-            requestAnimationFrame(
-                animate
-            );
-
+            requestAnimationFrame(animate);
 
             if (started) {
+                // Open doors
+                leftDoorGroup.rotation.y = THREE.MathUtils.lerp(leftDoorGroup.rotation.y, -Math.PI / 2.2, 0.02);
+                rightDoorGroup.rotation.y = THREE.MathUtils.lerp(rightDoorGroup.rotation.y, Math.PI / 2.2, 0.02);
 
-                camera.position.x +=
-                    (
-                        mouseX * 2 -
-                        camera.position.x
-                    ) * 0.015;
+                // Advance camera through gates
+                camera.position.z = THREE.MathUtils.lerp(camera.position.z, -10, 0.015);
+                camera.position.x += (mouseX * 2 - camera.position.x) * 0.015;
+                camera.position.y += (5 - mouseY * 1.5 - camera.position.y) * 0.015;
 
-                camera.position.y +=
-                    (
-                        5 -
-                        mouseY * 1.5 -
-                        camera.position.y
-                    ) * 0.015;
-
-                camera.lookAt(
-                    0,
-                    10,
-                    -20
-                );
+                camera.lookAt(0, 10, -75);
             }
 
-
-            renderer.render(
-                scene,
-                camera
-            );
+            renderer.render(scene, camera);
         }
 
+        // Enter button audio & interaction
+        document.getElementById("enterButton").addEventListener("click", () => {
+            started = true;
+            document.getElementById("intro").classList.add("hidden");
 
-        // Enter button
-        document
-            .getElementById("enterButton")
-            .addEventListener(
-                "click",
-                () => {
+            const ambientSound = document.getElementById("ambientSound");
+            const gateSound = document.getElementById("gateSound");
 
-                    started = true;
+            ambientSound.volume = 0.5;
+            ambientSound.play().catch(() => {});
+            gateSound.play().catch(() => {});
+        });
 
-                    document
-                        .getElementById("intro")
-                        .classList.add(
-                            "hidden"
-                        );
-                }
-            );
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
-
-        // Resize
-        window.addEventListener(
-            "resize",
-            () => {
-
-                camera.aspect =
-                    window.innerWidth /
-                    window.innerHeight;
-
-                camera.updateProjectionMatrix();
-
-                renderer.setSize(
-                    window.innerWidth,
-                    window.innerHeight
-                );
-            }
-        );
-
-
-        // Start
         init();
-
     </script>
-
 </body>
 </html>
