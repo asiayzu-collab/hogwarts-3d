@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Hogwarts — Enter the Castle</title>
+
+    <!-- Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        body {
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        #intro {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(0, 40, 25, 0.25),
+                    #000 70%
+                );
+
+            transition:
+                opacity 1.5s ease,
+                visibility 1.5s ease;
+        }
+
+        #intro.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .intro-content {
+            text-align: center;
+            color: white;
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            letter-spacing: 7px;
+            color: #557c69;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+
+            font-size: clamp(42px, 7vw, 100px);
+            font-weight: 400;
+            letter-spacing: 8px;
+
+            color: #e7eee9;
+
+            text-shadow:
+                0 0 10px rgba(0, 255, 140, 0.15),
+                0 0 40px rgba(0, 255, 140, 0.08);
+        }
+
+        .subtitle {
+            margin-top: 18px;
+
+            font-size: 14px;
+            letter-spacing: 5px;
+
+            color: #6d8f80;
+            text-transform: uppercase;
+        }
+
+        #enterButton {
+            margin-top: 55px;
+
+            padding: 17px 45px;
+
+            background: transparent;
+            color: #b9d7c8;
+
+            border: 1px solid rgba(80, 180, 130, 0.5);
+
+            font-family: inherit;
+            font-size: 14px;
+            letter-spacing: 5px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.4s ease,
+                box-shadow 0.4s ease,
+                transform 0.4s ease;
+        }
+
+        #enterButton:hover {
+            background: rgba(0, 100, 60, 0.25);
+
+            box-shadow:
+                0 0 20px rgba(0, 255, 140, 0.2),
+                inset 0 0 20px rgba(0, 255, 140, 0.05);
+
+            transform: scale(1.04);
+        }
+
+        #loading {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+
+            color: #385448;
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Opening screen -->
+    <div id="intro">
+
+        <div class="intro-content">
+
+            <div class="eyebrow">
+                A Forbidden Entrance
+            </div>
+
+            <h1>HOGWARTS</h1>
+
+            <div class="subtitle">
+                The castle awaits
+            </div>
+
+            <button id="enterButton">
+                ENTER THE CASTLE
+            </button>
+
+        </div>
+
+        <div id="loading">
+            Initializing magic
+        </div>
+
+    </div>
+
+
+    <!-- Three.js scene will appear here -->
+    <script>
+
+        /*
+         * ============================================
+         * HOGWARTS 3D CINEMATIC ENTRANCE
+         * ============================================
+         */
+
+        let scene;
+        let camera;
+        let renderer;
+
+        let started = false;
+
+        // Scene setup
+        function init() {
+
+            scene = new THREE.Scene();
+
+            scene.background = new THREE.Color(0x000403);
+
+            // Atmospheric fog
+            scene.fog = new THREE.FogExp2(
+                0x000805,
+                0.018
+            );
+
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                55,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                2000
+            );
+
+            camera.position.set(
+                0,
+                5,
+                35
+            );
+
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+
+            renderer.setSize(
+                window.innerWidth,
+                window.innerHeight
+            );
+
+            renderer.setPixelRatio(
+                Math.min(window.devicePixelRatio, 1.5)
+            );
+
+            renderer.shadowMap.enabled = true;
+
+            document.body.appendChild(
+                renderer.domElement
+            );
+
+
+            // Lighting
+
+            const ambientLight =
+                new THREE.AmbientLight(
+                    0x10251b,
+                    1.5
+                );
+
+            scene.add(ambientLight);
+
+
+            const moonLight =
+                new THREE.DirectionalLight(
+                    0x9bb8aa,
+                    1.2
+                );
+
+            moonLight.position.set(
+                -20,
+                40,
+                30
+            );
+
+            moonLight.castShadow = true;
+
+            scene.add(moonLight);
+
+
+            const emeraldLight =
+                new THREE.PointLight(
+                    0x00ff88,
+                    8,
+                    80
+                );
+
+            emeraldLight.position.set(
+                0,
+                5,
+                10
+            );
+
+            scene.add(emeraldLight);
+
+
+            createGround();
+            createGate();
+            createCastle();
+            createParticles();
+
+            animate();
+        }
+
+
+        // Ground
+        function createGround() {
+
+            const geometry =
+                new THREE.PlaneGeometry(
+                    500,
+                    500
+                );
+
+            const material =
+                new THREE.MeshStandardMaterial({
+                    color: 0x050807,
+                    roughness: 0.95,
+                    metalness: 0.2
+                });
+
+            const ground =
+                new THREE.Mesh(
+                    geometry,
+                    material
+                );
+
+            ground.rotation.x =
+                -Math.PI / 2;
+
+            ground.position.y = 0;
+
+            ground.receiveShadow = true;
+
+            scene.add(ground);
+        }
+
+
+        // Main gothic gate
+        function createGate() {
+
+            const gateMaterial =
+                new THREE.MeshStandardMaterial({
+                    color: 0x080b09,
+                    metalness: 0.9,
+                    roughness: 0.3
+                });
+
+
+            // Left door
+            const leftDoor =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        11,
+                        22,
+                        1.2
+                    ),
+                    gateMaterial
+                );
+
+            leftDoor.position.set(
+                -6,
+                11,
+                0
+            );
+
+            leftDoor.castShadow = true;
+
+            scene.add(leftDoor);
+
+
+            // Right door
+            const rightDoor =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        11,
+                        22,
+                        1.2
+                    ),
+                    gateMaterial
+                );
+
+            rightDoor.position.set(
+                6,
+                11,
+                0
+            );
+
+            rightDoor.castShadow = true;
+
+            scene.add(rightDoor);
+
+
+            // Vertical bars
+            for (
+                let x = -10;
+                x <= 10;
+                x += 2
+            ) {
+
+                const bar =
+                    new THREE.Mesh(
+                        new THREE.CylinderGeometry(
+                            0.18,
+                            0.18,
+                            22,
+                            8
+                        ),
+                        gateMaterial
+                    );
+
+                bar.position.set(
+                    x,
+                    11,
+                    -0.8
+                );
+
+                scene.add(bar);
+            }
+
+
+            // Gothic pillars
+            createPillar(-13);
+            createPillar(13);
+
+
+            // Arch
+            const arch =
+                new THREE.Mesh(
+                    new THREE.TorusGeometry(
+                        11,
+                        0.8,
+                        12,
+                        40,
+                        Math.PI
+                    ),
+                    gateMaterial
+                );
+
+            arch.rotation.z = Math.PI;
+
+            arch.position.set(
+                0,
+                20,
+                0
+            );
+
+            scene.add(arch);
+
+
+            // Emerald magical center
+            const magic =
+                new THREE.PointLight(
+                    0x00ff88,
+                    4,
+                    35
+                );
+
+            magic.position.set(
+                0,
+                10,
+                3
+            );
+
+            scene.add(magic);
+        }
+
+
+        function createPillar(x) {
+
+            const material =
+                new THREE.MeshStandardMaterial({
+                    color: 0x111514,
+                    roughness: 0.85,
+                    metalness: 0.15
+                });
+
+
+            const pillar =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        4,
+                        27,
+                        4
+                    ),
+                    material
+                );
+
+            pillar.position.set(
+                x,
+                13.5,
+                0
+            );
+
+            pillar.castShadow = true;
+
+            pillar.receiveShadow = true;
+
+            scene.add(pillar);
+
+
+            // Pillar cap
+            const cap =
+                new THREE.Mesh(
+                    new THREE.ConeGeometry(
+                        3,
+                        5,
+                        4
+                    ),
+                    material
+                );
+
+            cap.position.set(
+                x,
+                29,
+                0
+            );
+
+            scene.add(cap);
+        }
+
+
+        // Castle silhouette
+        function createCastle() {
+
+            const castleMaterial =
+                new THREE.MeshStandardMaterial({
+                    color: 0x080d0b,
+                    roughness: 0.9
+                });
+
+
+            // Main castle
+            const castle =
+                new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                        55,
+                        35,
+                        25
+                    ),
+                    castleMaterial
+                );
+
+            castle.position.set(
+                0,
+                17,
+                -75
+            );
+
+            scene.add(castle);
+
+
+            // Towers
+            const towerPositions = [
+                [-24, -72],
+                [24, -72],
+                [-15, -90],
+                [15, -90]
+            ];
+
+
+            towerPositions.forEach(
+                ([x, z]) => {
+
+                    const tower =
+                        new THREE.Mesh(
+                            new THREE.CylinderGeometry(
+                                5,
+                                6,
+                                45,
+                                10
+                            ),
+                            castleMaterial
+                        );
+
+                    tower.position.set(
+                        x,
+                        22,
+                        z
+                    );
+
+                    scene.add(tower);
+
+
+                    const roof =
+                        new THREE.Mesh(
+                            new THREE.ConeGeometry(
+                                7,
+                                13,
+                                10
+                            ),
+                            castleMaterial
+                        );
+
+                    roof.position.set(
+                        x,
+                        51,
+                        z
+                    );
+
+                    scene.add(roof);
+                }
+            );
+        }
+
+
+        // Magical particles
+        function createParticles() {
+
+            const count =
+                window.innerWidth < 600
+                    ? 400
+                    : 900;
+
+            const geometry =
+                new THREE.BufferGeometry();
+
+            const positions =
+                new Float32Array(
+                    count * 3
+                );
+
+
+            for (
+                let i = 0;
+                i < count;
+                i++
+            ) {
+
+                positions[i * 3] =
+                    (Math.random() - 0.5) * 100;
+
+                positions[i * 3 + 1] =
+                    Math.random() * 50;
+
+                positions[i * 3 + 2] =
+                    Math.random() * -120;
+            }
+
+
+            geometry.setAttribute(
+                "position",
+                new THREE.BufferAttribute(
+                    positions,
+                    3
+                )
+            );
+
+
+            const material =
+                new THREE.PointsMaterial({
+                    color: 0x20d88a,
+                    size: 0.12,
+                    transparent: true,
+                    opacity: 0.65
+                });
+
+
+            const particles =
+                new THREE.Points(
+                    geometry,
+                    material
+                );
+
+            scene.add(particles);
+        }
+
+
+        // Mouse interaction
+        let mouseX = 0;
+        let mouseY = 0;
+
+        window.addEventListener(
+            "mousemove",
+            (event) => {
+
+                mouseX =
+                    (event.clientX /
+                        window.innerWidth -
+                        0.5);
+
+                mouseY =
+                    (event.clientY /
+                        window.innerHeight -
+                        0.5);
+            }
+        );
+
+
+        // Animation loop
+        function animate() {
+
+            requestAnimationFrame(
+                animate
+            );
+
+
+            if (started) {
+
+                camera.position.x +=
+                    (
+                        mouseX * 2 -
+                        camera.position.x
+                    ) * 0.015;
+
+                camera.position.y +=
+                    (
+                        5 -
+                        mouseY * 1.5 -
+                        camera.position.y
+                    ) * 0.015;
+
+                camera.lookAt(
+                    0,
+                    10,
+                    -20
+                );
+            }
+
+
+            renderer.render(
+                scene,
+                camera
+            );
+        }
+
+
+        // Enter button
+        document
+            .getElementById("enterButton")
+            .addEventListener(
+                "click",
+                () => {
+
+                    started = true;
+
+                    document
+                        .getElementById("intro")
+                        .classList.add(
+                            "hidden"
+                        );
+                }
+            );
+
+
+        // Resize
+        window.addEventListener(
+            "resize",
+            () => {
+
+                camera.aspect =
+                    window.innerWidth /
+                    window.innerHeight;
+
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(
+                    window.innerWidth,
+                    window.innerHeight
+                );
+            }
+        );
+
+
+        // Start
+        init();
+
+    </script>
+
+</body>
+</html>
