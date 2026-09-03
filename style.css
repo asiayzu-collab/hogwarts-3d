@@ -1,1 +1,421 @@
+/* =========================================
+   HOGWARTS — CINEMATIC DARK FANTASY
+   ========================================= */
 
+:root {
+    --black: #020504;
+    --deep-black: #000000;
+    --emerald: #00b86b;
+    --bright-emerald: #00ff91;
+    --dark-emerald: #063b29;
+    --silver: #c7d4ce;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--deep-black);
+}
+
+body {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    color: white;
+}
+
+/* =========================================
+   THREE.JS CANVAS
+   ========================================= */
+
+canvas {
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    z-index: 1;
+}
+
+/* =========================================
+   INTRO SCREEN
+   ========================================= */
+
+#intro {
+    position: fixed;
+    inset: 0;
+
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(0, 70, 42, 0.18) 0%,
+            rgba(0, 10, 7, 0.65) 35%,
+            #000 80%
+        );
+
+    transition:
+        opacity 1.8s ease,
+        visibility 1.8s ease;
+
+    pointer-events: auto;
+}
+
+#intro::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            transparent 20%,
+            rgba(0, 0, 0, 0.55) 75%,
+            rgba(0, 0, 0, 0.95) 100%
+        );
+
+    pointer-events: none;
+}
+
+#intro.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* =========================================
+   INTRO CONTENT
+   ========================================= */
+
+.intro-content {
+    position: relative;
+
+    z-index: 2;
+
+    width: 90%;
+    max-width: 900px;
+
+    text-align: center;
+
+    animation:
+        introAppear 2.5s ease forwards;
+}
+
+@keyframes introAppear {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(20px)
+            scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+/* =========================================
+   SMALL TITLE
+   ========================================= */
+
+.eyebrow {
+    margin-bottom: 24px;
+
+    color: rgba(128, 185, 160, 0.75);
+
+    font-size: 11px;
+
+    letter-spacing: 8px;
+
+    text-transform: uppercase;
+
+    text-shadow:
+        0 0 15px rgba(0, 255, 145, 0.15);
+}
+
+/* =========================================
+   MAIN TITLE
+   ========================================= */
+
+h1 {
+    margin: 0;
+
+    font-size:
+        clamp(45px, 9vw, 125px);
+
+    font-weight: 400;
+
+    letter-spacing:
+        clamp(5px, 1.5vw, 16px);
+
+    color: #dce7e2;
+
+    text-shadow:
+        0 0 8px rgba(255, 255, 255, 0.15),
+        0 0 30px rgba(0, 255, 145, 0.12),
+        0 0 80px rgba(0, 180, 100, 0.08);
+}
+
+/* =========================================
+   SUBTITLE
+   ========================================= */
+
+.subtitle {
+    margin-top: 20px;
+
+    color:
+        rgba(150, 190, 174, 0.65);
+
+    font-size: 12px;
+
+    letter-spacing: 6px;
+
+    text-transform: uppercase;
+}
+
+/* =========================================
+   ENTER BUTTON
+   ========================================= */
+
+#enterButton {
+    position: relative;
+
+    margin-top: 55px;
+
+    padding:
+        17px 42px;
+
+    min-width: 230px;
+
+    border:
+        1px solid
+        rgba(0, 255, 145, 0.35);
+
+    outline: none;
+
+    background:
+        rgba(0, 25, 17, 0.35);
+
+    color:
+        rgba(190, 230, 214, 0.9);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 12px;
+
+    letter-spacing: 5px;
+
+    cursor: pointer;
+
+    overflow: hidden;
+
+    transition:
+        transform 0.4s ease,
+        border-color 0.4s ease,
+        background 0.4s ease,
+        box-shadow 0.4s ease;
+}
+
+#enterButton::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: -120%;
+
+    width: 100%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(0, 255, 145, 0.18),
+            transparent
+        );
+
+    transition:
+        left 0.8s ease;
+}
+
+#enterButton:hover {
+    transform:
+        translateY(-2px)
+        scale(1.03);
+
+    border-color:
+        rgba(0, 255, 145, 0.8);
+
+    background:
+        rgba(0, 80, 48, 0.25);
+
+    box-shadow:
+        0 0 20px rgba(0, 255, 145, 0.12),
+        0 0 60px rgba(0, 255, 145, 0.06),
+        inset 0 0 20px rgba(0, 255, 145, 0.05);
+}
+
+#enterButton:hover::before {
+    left: 120%;
+}
+
+#enterButton:active {
+    transform:
+        translateY(0)
+        scale(0.98);
+}
+
+/* =========================================
+   LOADING TEXT
+   ========================================= */
+
+#loading {
+    position: absolute;
+
+    bottom: 28px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    z-index: 3;
+
+    color:
+        rgba(80, 130, 108, 0.55);
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    font-size: 9px;
+
+    letter-spacing: 4px;
+
+    text-transform: uppercase;
+
+    animation:
+        loadingPulse 2.5s
+        ease-in-out
+        infinite;
+}
+
+@keyframes loadingPulse {
+
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+
+    50% {
+        opacity: 0.9;
+    }
+}
+
+/* =========================================
+   CINEMATIC VIGNETTE
+   ========================================= */
+
+body::after {
+    content: "";
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 15;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 40%,
+            rgba(0, 0, 0, 0.25) 65%,
+            rgba(0, 0, 0, 0.85) 100%
+        );
+}
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 700px) {
+
+    .eyebrow {
+        font-size: 8px;
+        letter-spacing: 5px;
+    }
+
+    h1 {
+        letter-spacing: 6px;
+    }
+
+    .subtitle {
+        font-size: 9px;
+        letter-spacing: 4px;
+    }
+
+    #enterButton {
+        margin-top: 40px;
+
+        padding:
+            15px 30px;
+
+        min-width: 200px;
+
+        font-size: 10px;
+
+        letter-spacing: 4px;
+    }
+
+    #loading {
+        bottom: 20px;
+
+        font-size: 7px;
+
+        letter-spacing: 3px;
+    }
+}
+
+/* =========================================
+   REDUCED MOTION
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
